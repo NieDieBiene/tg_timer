@@ -2,18 +2,12 @@ import ptbot
 import os
 
 from pathlib import Path
-from dotenv import load_dotenv
 from pytimeparse import parse
+from decouple import config
+from functools import partial
 
 
-dotenv_path = Path('.env')
-load_dotenv(dotenv_path)
-TG_TOKEN = os.getenv('TG_TOKEN')
-TG_CHAT_ID = os.getenv('TG_CHAT_ID')
-bot = ptbot.Bot(TG_TOKEN)
-
-
-def reply(chat_id, text):
+def reply(bot, chat_id, text):
     time = parse(text)
     message_id = bot.send_message(chat_id, "Осталось {} секунд!".format(time))
     bot.create_countdown(
@@ -21,16 +15,17 @@ def reply(chat_id, text):
         notify_progress,
         chat_id=chat_id,
         message_id=message_id,
-        total_time=time
+        total_time=time,
+        bot=bot
     )
-    bot.create_timer(time, notify, chat_id=chat_id)
+    bot.create_timer(time, notify, chat_id=chat_id, bot=bot)
 
 
-def notify(chat_id):
+def notify(chat_id, bot):
     bot.send_message(chat_id, "Время вышло!")
 
 
-def notify_progress(secs_left, chat_id, message_id, total_time):
+def notify_progress(secs_left, chat_id, message_id, total_time, bot):
     seconds_passed = total_time - secs_left
     progress_text = render_progressbar(
         total=total_time,
@@ -61,7 +56,10 @@ def render_progressbar(
 
 
 def main():
-    bot.reply_on_message(reply)
+    TG_TOKEN = config('TG_TOKEN')
+    bot = ptbot.Bot(TG_TOKEN)
+    handler = partial(reply, bot)
+    bot.reply_on_message(handler)
     bot.run_bot()
 
 
