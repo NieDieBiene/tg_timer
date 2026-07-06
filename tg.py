@@ -56,8 +56,8 @@ def render_progressbar(
 
 
 def main():
-    TG_TOKEN = config('TG_TOKEN')
-    bot = ptbot.Bot(TG_TOKEN)
+    tg_token = config('TG_TOKEN')
+    bot = ptbot.Bot(tg_token)
     handler = partial(reply, bot)
     bot.reply_on_message(handler)
     bot.run_bot()
